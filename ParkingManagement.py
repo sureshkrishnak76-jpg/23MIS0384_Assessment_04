@@ -4,14 +4,12 @@ from datetime import datetime
 class ParkingManagement:
 
     # =========================================================
-    # PARKING MANAGEMENT SYSTEM
+    # INITIALIZATION
     # =========================================================
 
     def __init__(self):
 
-        # Slot format:
-        # slot_id : slot_type
-
+        # Parking slot ID -> slot type
         self.slots = {
             "B1": "Bike",
             "B2": "Bike",
@@ -28,15 +26,16 @@ class ParkingManagement:
             "VIP1": "VIP"
         }
 
-        # Currently occupied slots
+        # Occupied slots
         self.occupied = {}
 
-        # Vehicle -> parking ticket
+        # Vehicle number -> ticket
         self.tickets = {}
 
+        # Ticket number
         self.next_ticket = 1001
 
-        # Base hourly rates
+        # Base parking charges per hour
         self.base_rates = {
             "Bike": 30,
             "Car": 50,
@@ -45,8 +44,14 @@ class ParkingManagement:
             "Electric Vehicle": 50
         }
 
+        # EV charging fee per hour
+        self.ev_charging_rate = 20
+
+        # Lost ticket fixed charge
+        self.lost_ticket_charge = 500
+
     # =========================================================
-    # VEHICLE VALIDATION
+    # VALIDATE VEHICLE TYPE
     # =========================================================
 
     def validate_vehicle_type(self, vehicle_type):
@@ -66,25 +71,34 @@ class ParkingManagement:
             )
 
     # =========================================================
-    # SLOT COMPATIBILITY
+    # CHECK SLOT COMPATIBILITY
     # =========================================================
 
-    def is_compatible(self, slot_type, vehicle_type):
+    def is_compatible(
+        self,
+        slot_type,
+        vehicle_type
+    ):
 
-        # VIP slot can accept any vehicle
+        # VIP slot cannot be used by
+        # normal vehicles
         if slot_type == "VIP":
 
-            return True
+            return False
 
-        # EV must use EV slot
+        # EV must use dedicated EV slot
         if vehicle_type == "Electric Vehicle":
 
-            return slot_type == "Electric Vehicle"
+            return (
+                slot_type
+                == "Electric Vehicle"
+            )
 
+        # Other vehicles need matching slot
         return slot_type == vehicle_type
 
     # =========================================================
-    # SLOT ALLOCATION
+    # ALLOCATE SLOT
     # =========================================================
 
     def allocate_slot(
@@ -97,7 +111,10 @@ class ParkingManagement:
             vehicle_type
         )
 
-        # VIP vehicle gets VIP slot first
+        # -----------------------------------------------------
+        # VIP vehicle
+        # -----------------------------------------------------
+
         if vip:
 
             if "VIP1" not in self.occupied:
@@ -108,10 +125,15 @@ class ParkingManagement:
                 "VIP parking slot unavailable"
             )
 
-        # Normal allocation
+        # -----------------------------------------------------
+        # Normal vehicle
+        # -----------------------------------------------------
+
         for slot_id, slot_type in self.slots.items():
 
+            # Skip occupied slot
             if slot_id in self.occupied:
+
                 continue
 
             if self.is_compatible(
@@ -137,36 +159,19 @@ class ParkingManagement:
         vip=False
     ):
 
+        # Validate vehicle number
         if not vehicle_number:
 
             raise ValueError(
                 "Invalid vehicle number"
             )
 
+        # Validate vehicle type
         self.validate_vehicle_type(
             vehicle_type
         )
 
-        # Duplicate vehicle check
-        if vehicle_number in self.tickets:
-
-            existing_ticket = self.tickets[
-                vehicle_number
-            ]
-
-            if existing_ticket["status"] == "PARKED":
-
-                raise ValueError(
-                    "Vehicle already parked"
-                )
-
-        # Allocate slot
-        slot = self.allocate_slot(
-            vehicle_type,
-            vip
-        )
-
-        # Validate datetime
+        # Validate entry time
         try:
 
             datetime.strptime(
@@ -180,33 +185,80 @@ class ParkingManagement:
                 "Invalid entry time"
             )
 
+        # -----------------------------------------------------
+        # Duplicate vehicle check
+        # -----------------------------------------------------
+
+        if vehicle_number in self.tickets:
+
+            existing_ticket = self.tickets[
+                vehicle_number
+            ]
+
+            if existing_ticket["status"] == "PARKED":
+
+                raise ValueError(
+                    "Vehicle already parked"
+                )
+
+        # -----------------------------------------------------
+        # Allocate parking slot
+        # -----------------------------------------------------
+
+        slot = self.allocate_slot(
+            vehicle_type,
+            vip
+        )
+
+        # -----------------------------------------------------
+        # Generate ticket
+        # -----------------------------------------------------
+
         ticket_id = self.next_ticket
 
         self.next_ticket += 1
 
         ticket = {
+
             "ticket_id": ticket_id,
-            "vehicle_number": vehicle_number,
-            "vehicle_type": vehicle_type,
-            "slot": slot,
-            "entry_time": entry_time,
-            "vip": vip,
-            "status": "PARKED"
+
+            "vehicle_number":
+                vehicle_number,
+
+            "vehicle_type":
+                vehicle_type,
+
+            "slot":
+                slot,
+
+            "entry_time":
+                entry_time,
+
+            "vip":
+                vip,
+
+            "status":
+                "PARKED"
         }
 
         self.tickets[
             vehicle_number
         ] = ticket
 
-        self.occupied[slot] = ticket
+        self.occupied[
+            slot
+        ] = ticket
 
         return ticket
 
     # =========================================================
-    # PEAK HOUR
+    # PEAK HOUR CHECK
     # =========================================================
 
-    def is_peak_hour(self, time_string):
+    def is_peak_hour(
+        self,
+        time_string
+    ):
 
         dt = datetime.strptime(
             time_string,
@@ -215,8 +267,11 @@ class ParkingManagement:
 
         hour = dt.hour
 
-        # Morning peak: 8 AM - 10 AM
-        # Evening peak: 5 PM - 8 PM
+        # Morning peak:
+        # 08:00 - 09:59
+
+        # Evening peak:
+        # 17:00 - 19:59
 
         if (
             8 <= hour < 10
@@ -229,7 +284,7 @@ class ParkingManagement:
         return False
 
     # =========================================================
-    # PARKING FEE
+    # PARKING FEE CALCULATION
     # =========================================================
 
     def calculate_fee(
@@ -245,92 +300,124 @@ class ParkingManagement:
             vehicle_type
         )
 
+        # -----------------------------------------------------
         # Lost ticket
+        # -----------------------------------------------------
+
         if lost_ticket:
 
-            return 500
+            return self.lost_ticket_charge
+
+        # -----------------------------------------------------
+        # Convert dates
+        # -----------------------------------------------------
 
         entry = datetime.strptime(
             entry_time,
             "%Y-%m-%d %H:%M"
         )
 
-        exit = datetime.strptime(
+        exit_time_obj = datetime.strptime(
             exit_time,
             "%Y-%m-%d %H:%M"
         )
 
-        if exit < entry:
+        # -----------------------------------------------------
+        # Validate exit
+        # -----------------------------------------------------
+
+        if exit_time_obj < entry:
 
             raise ValueError(
                 "Exit time cannot be before entry time"
             )
 
+        # -----------------------------------------------------
+        # Calculate duration
+        # -----------------------------------------------------
+
         duration_seconds = (
-            exit - entry
+            exit_time_obj - entry
         ).total_seconds()
 
         duration_hours = (
             duration_seconds / 3600
         )
 
-        # Early exit / minimum one hour
-        billable_hours = max(
-            1,
-            int(duration_hours)
-            if duration_hours.is_integer()
-            else int(duration_hours) + 1
-        )
+        # Minimum one hour
+        if duration_hours <= 1:
 
-        # Overnight parking
-        days = (
-            exit.date() - entry.date()
-        ).days
-
-        if days >= 1:
-
-            # Daily maximum
-            base_fee = (
-                self.base_rates[vehicle_type]
-                * 24
-                * days
-            )
-
-            remaining_hours = (
-                billable_hours - (24 * days)
-            )
-
-            if remaining_hours > 0:
-
-                base_fee += (
-                    remaining_hours
-                    * self.base_rates[vehicle_type]
-                )
+            billable_hours = 1
 
         else:
 
-            base_fee = (
-                billable_hours
-                * self.base_rates[vehicle_type]
+            billable_hours = int(
+                duration_hours
             )
 
+            if duration_hours > billable_hours:
+
+                billable_hours += 1
+
+        # -----------------------------------------------------
+        # Base parking charge
+        # -----------------------------------------------------
+
+        rate = self.base_rates[
+            vehicle_type
+        ]
+
+        base_fee = (
+            billable_hours * rate
+        )
+
+        # -----------------------------------------------------
         # Peak hour pricing
-        if self.is_peak_hour(exit_time):
+        # -----------------------------------------------------
+
+        if self.is_peak_hour(
+            exit_time
+        ):
 
             base_fee *= 1.25
 
+        # -----------------------------------------------------
         # VIP pricing
+        # -----------------------------------------------------
+
         if vip:
 
             base_fee *= 1.50
 
+        # -----------------------------------------------------
+        # EV charging fee
+        # -----------------------------------------------------
+
+        charging_fee = 0
+
+        if vehicle_type == "Electric Vehicle":
+
+            charging_fee = (
+                billable_hours
+                * self.ev_charging_rate
+            )
+
+        # -----------------------------------------------------
+        # Final amount
+        # -----------------------------------------------------
+
+        total_fee = (
+            base_fee
+            + charging_fee
+        )
+
         return round(
-            base_fee,
+            total_fee,
             2
         )
 
     # =========================================================
-    # EXIT
+    # VEHICLE EXIT
     # =========================================================
 
     def vehicle_exit(
@@ -340,6 +427,7 @@ class ParkingManagement:
         lost_ticket=False
     ):
 
+        # Check vehicle
         if vehicle_number not in self.tickets:
 
             raise ValueError(
@@ -350,6 +438,7 @@ class ParkingManagement:
             vehicle_number
         ]
 
+        # Check already exited
         if ticket["status"] == "EXITED":
 
             raise ValueError(
@@ -358,10 +447,15 @@ class ParkingManagement:
 
         # Calculate fee
         fee = self.calculate_fee(
+
             ticket["vehicle_type"],
+
             ticket["entry_time"],
+
             exit_time,
+
             ticket["vip"],
+
             lost_ticket
         )
 
@@ -372,18 +466,21 @@ class ParkingManagement:
 
             del self.occupied[slot]
 
+        # Update ticket
         ticket["exit_time"] = exit_time
 
         ticket["fee"] = fee
 
-        ticket["lost_ticket"] = lost_ticket
+        ticket["lost_ticket"] = (
+            lost_ticket
+        )
 
         ticket["status"] = "EXITED"
 
         return fee
 
     # =========================================================
-    # SLOT AVAILABILITY
+    # AVAILABLE SLOTS
     # =========================================================
 
     def available_slots(self):
@@ -401,22 +498,37 @@ class ParkingManagement:
 
 def main():
 
-    print("========================================")
-    print("       SMART PARKING MANAGEMENT")
-    print("========================================")
+    print(
+        "========================================"
+    )
+
+    print(
+        "       SMART PARKING MANAGEMENT"
+    )
+
+    print(
+        "========================================"
+    )
 
     parking = ParkingManagement()
 
     try:
 
+        # Vehicle entry
         ticket = parking.vehicle_entry(
+
             "TN01AB1234",
+
             "Car",
+
             "2026-08-20 10:00"
         )
 
         print()
-        print("Vehicle Entry Successful")
+
+        print(
+            "Vehicle Entry Successful"
+        )
 
         print(
             "Ticket ID:",
@@ -429,21 +541,47 @@ def main():
         )
 
         print(
-            "Slot:",
+            "Vehicle Type:",
+            ticket["vehicle_type"]
+        )
+
+        print(
+            "Parking Slot:",
             ticket["slot"]
         )
 
+        print(
+            "Entry Time:",
+            ticket["entry_time"]
+        )
+
+        # Vehicle exit
         fee = parking.vehicle_exit(
+
             "TN01AB1234",
+
             "2026-08-20 13:00"
         )
 
         print()
-        print("Vehicle Exit Successful")
+
+        print(
+            "Vehicle Exit Successful"
+        )
 
         print(
             "Parking Fee:",
             fee
+        )
+
+        print()
+
+        print(
+            "Available Slots:"
+        )
+
+        print(
+            parking.available_slots()
         )
 
     except ValueError as e:
@@ -455,4 +593,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
