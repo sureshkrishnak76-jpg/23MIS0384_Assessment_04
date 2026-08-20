@@ -7,428 +7,565 @@ public class LoanProcessingQA {
     static WebDriver driver;
 
     static String URL =
-            "file:///C:/Banking/23MIS0384_Assessment_04/Banking/index.html";
+        "file:///C:/YOUR_PATH/23MIS0384_Assessment_04/index.html";
+
 
     public static void main(String[] args) {
 
         System.setProperty(
-                "webdriver.chrome.driver",
-                "chromedriver.exe");
+            "webdriver.chrome.driver",
+            "chromedriver.exe"
+        );
 
         driver = new ChromeDriver();
 
         driver.manage().window().maximize();
 
+        int passed = 0;
+        int failed = 0;
+
         try {
 
             System.out.println(
-                    "====================================");
+                "========================================"
+            );
 
             System.out.println(
-                    " BANKING LOAN APPROVAL - QA TEST");
+                " BANKING LOAN APPROVAL - SELENIUM QA"
+            );
 
             System.out.println(
-                    "====================================");
+                "========================================"
+            );
 
 
-            testMinimumAge();
+            if (testMinimumAge()) passed++;
+            else failed++;
 
-            testMaximumAge();
+            if (testMaximumAge()) passed++;
+            else failed++;
 
-            testInvalidSalary();
+            if (testInvalidAge()) passed++;
+            else failed++;
 
-            testPoorCreditScore();
+            if (testInvalidSalary()) passed++;
+            else failed++;
 
-            testExistingLoanThreshold();
+            if (testPoorCreditScore()) passed++;
+            else failed++;
 
-            testHighDTI();
+            if (testExistingLoan()) passed++;
+            else failed++;
 
-            testGovernmentEmployment();
+            if (testHighDTI()) passed++;
+            else failed++;
 
-            testPrivateEmployment();
+            if (testGovernmentEmployment()) passed++;
+            else failed++;
 
-            testSelfEmployment();
+            if (testPrivateEmployment()) passed++;
+            else failed++;
 
-            testBoundaryLoanAmount();
+            if (testSelfEmployment()) passed++;
+            else failed++;
 
-            testEMI();
+            if (testBoundaryLoan()) passed++;
+            else failed++;
 
-            testInvalidInput();
+            if (testExcessLoan()) passed++;
+            else failed++;
 
-            testExceptionHandling();
+            if (testEMI()) passed++;
+            else failed++;
+
+            if (testInvalidInput()) passed++;
+            else failed++;
+
+            if (testInvalidTenure()) passed++;
+            else failed++;
 
 
             System.out.println(
-                    "\nALL TESTS COMPLETED");
+                "\n========================================"
+            );
 
-        }
-        finally {
+            System.out.println(
+                "TOTAL TESTS : " + (passed + failed)
+            );
+
+            System.out.println(
+                "PASSED      : " + passed
+            );
+
+            System.out.println(
+                "FAILED      : " + failed
+            );
+
+            if (failed == 0) {
+
+                System.out.println(
+                    "RESULT      : ALL TESTS PASSED"
+                );
+
+            } else {
+
+                System.out.println(
+                    "RESULT      : TESTS FAILED"
+                );
+            }
+
+            System.out.println(
+                "========================================"
+            );
+
+        } finally {
 
             driver.quit();
         }
     }
 
 
-    // Common form filling method
+    // Common method
 
     static void fillForm(
-            String customerId,
-            String age,
-            String salary,
-            String existingLoan,
-            String creditScore,
-            String employment,
-            String requestedLoan,
-            String tenure) {
+        String customerId,
+        String age,
+        String salary,
+        String existingLoan,
+        String creditScore,
+        String employment,
+        String requestedLoan,
+        String tenure) {
 
         driver.get(URL);
 
         driver.findElement(
-                By.id("customerId"))
-                .sendKeys(customerId);
+            By.id("customerId"))
+            .sendKeys(customerId);
 
         driver.findElement(
-                By.id("age"))
-                .sendKeys(age);
+            By.id("age"))
+            .sendKeys(age);
 
         driver.findElement(
-                By.id("salary"))
-                .sendKeys(salary);
+            By.id("salary"))
+            .sendKeys(salary);
 
         driver.findElement(
-                By.id("existingLoan"))
-                .sendKeys(existingLoan);
+            By.id("existingLoan"))
+            .sendKeys(existingLoan);
 
         driver.findElement(
-                By.id("creditScore"))
-                .sendKeys(creditScore);
+            By.id("creditScore"))
+            .sendKeys(creditScore);
 
         driver.findElement(
-                By.id("employment"))
-                .sendKeys(employment);
+            By.id("employment"))
+            .sendKeys(employment);
 
         driver.findElement(
-                By.id("requestedLoan"))
-                .sendKeys(requestedLoan);
+            By.id("requestedLoan"))
+            .sendKeys(requestedLoan);
 
         driver.findElement(
-                By.id("tenure"))
-                .sendKeys(tenure);
+            By.id("tenure"))
+            .sendKeys(tenure);
 
         driver.findElement(
-                By.id("submit"))
-                .click();
+            By.id("submit"))
+            .click();
     }
 
 
-    // 1. Minimum Age
+    static String getStatus() {
 
-    static void testMinimumAge() {
-
-        fillForm(
-                "C001",
-                "18",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60");
-
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
-
-        System.out.println(
-                "Minimum Age Test : " + result);
+        return driver.findElement(
+            By.id("status"))
+            .getText();
     }
 
 
-    // 2. Maximum Age
+    // TC01
 
-    static void testMaximumAge() {
+    static boolean testMinimumAge() {
 
         fillForm(
-                "C002",
-                "60",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60");
+            "C001",
+            "18",
+            "50000",
+            "0",
+            "750",
+            "Government",
+            "500000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().equals("APPROVED");
 
-        System.out.println(
-                "Maximum Age Test : " + result);
+        print("TC01 Minimum Age", pass);
+
+        return pass;
     }
 
 
-    // 3. Invalid Salary
+    // TC02
 
-    static void testInvalidSalary() {
+    static boolean testMaximumAge() {
 
         fillForm(
-                "C003",
-                "30",
-                "-5000",
-                "0",
-                "750",
-                "Private",
-                "300000",
-                "60");
+            "C002",
+            "60",
+            "50000",
+            "0",
+            "750",
+            "Government",
+            "500000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().equals("APPROVED");
 
-        System.out.println(
-                "Invalid Salary Test : " + result);
+        print("TC02 Maximum Age", pass);
+
+        return pass;
     }
 
 
-    // 4. Poor Credit Score
+    // TC03
 
-    static void testPoorCreditScore() {
+    static boolean testInvalidAge() {
 
         fillForm(
-                "C004",
-                "30",
-                "50000",
-                "0",
-                "500",
-                "Private",
-                "300000",
-                "60");
+            "C003",
+            "17",
+            "50000",
+            "0",
+            "750",
+            "Government",
+            "500000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().contains("REJECTED");
 
-        System.out.println(
-                "Poor Credit Score Test : " + result);
+        print("TC03 Invalid Age", pass);
+
+        return pass;
     }
 
 
-    // 5. Existing Loan Threshold
+    // TC04
 
-    static void testExistingLoanThreshold() {
+    static boolean testInvalidSalary() {
 
         fillForm(
-                "C005",
-                "30",
-                "50000",
-                "600000",
-                "750",
-                "Private",
-                "300000",
-                "60");
+            "C004",
+            "30",
+            "-5000",
+            "0",
+            "750",
+            "Private",
+            "300000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().contains("REJECTED");
 
-        System.out.println(
-                "Existing Loan Test : " + result);
+        print("TC04 Invalid Salary", pass);
+
+        return pass;
     }
 
 
-    // 6. High DTI
+    // TC05
 
-    static void testHighDTI() {
+    static boolean testPoorCreditScore() {
 
         fillForm(
-                "C006",
-                "30",
-                "30000",
-                "900000",
-                "750",
-                "Private",
-                "200000",
-                "60");
+            "C005",
+            "30",
+            "50000",
+            "0",
+            "500",
+            "Private",
+            "300000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().contains("REJECTED");
 
-        System.out.println(
-                "High DTI Test : " + result);
+        print("TC05 Poor Credit Score", pass);
+
+        return pass;
     }
 
 
-    // 7. Government Employment
+    // TC06
 
-    static void testGovernmentEmployment() {
+    static boolean testExistingLoan() {
 
         fillForm(
-                "C007",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60");
+            "C006",
+            "30",
+            "50000",
+            "600000",
+            "750",
+            "Private",
+            "300000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().contains("REJECTED");
 
-        System.out.println(
-                "Government Employment : " + result);
+        print("TC06 Existing Loan Threshold", pass);
+
+        return pass;
     }
 
 
-    // 8. Private Employment
+    // TC07
 
-    static void testPrivateEmployment() {
+    static boolean testHighDTI() {
 
         fillForm(
-                "C008",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Private",
-                "500000",
-                "60");
+            "C007",
+            "30",
+            "30000",
+            "900000",
+            "750",
+            "Private",
+            "200000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().contains("REJECTED");
 
-        System.out.println(
-                "Private Employment : " + result);
+        print("TC07 High DTI", pass);
+
+        return pass;
     }
 
 
-    // 9. Self Employed
+    // TC08
 
-    static void testSelfEmployment() {
+    static boolean testGovernmentEmployment() {
 
         fillForm(
-                "C009",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Self-Employed",
-                "500000",
-                "60");
+            "C008",
+            "30",
+            "50000",
+            "0",
+            "750",
+            "Government",
+            "500000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().equals("APPROVED");
 
-        System.out.println(
-                "Self Employment : " + result);
+        print("TC08 Government Employment", pass);
+
+        return pass;
     }
 
 
-    // 10. Boundary Loan Amount
+    // TC09
 
-    static void testBoundaryLoanAmount() {
+    static boolean testPrivateEmployment() {
 
         fillForm(
-                "C010",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "1000000",
-                "60");
+            "C009",
+            "30",
+            "50000",
+            "0",
+            "750",
+            "Private",
+            "500000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().equals("APPROVED");
 
-        System.out.println(
-                "Boundary Loan Test : " + result);
+        print("TC09 Private Employment", pass);
+
+        return pass;
     }
 
 
-    // 11. EMI Accuracy
+    // TC10
 
-    static void testEMI() {
+    static boolean testSelfEmployment() {
 
         fillForm(
-                "C011",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60");
+            "C010",
+            "30",
+            "50000",
+            "0",
+            "750",
+            "Self-Employed",
+            "500000",
+            "60"
+        );
+
+        boolean pass =
+            getStatus().equals("APPROVED");
+
+        print("TC10 Self-Employed", pass);
+
+        return pass;
+    }
+
+
+    // TC11
+
+    static boolean testBoundaryLoan() {
+
+        // Government eligible loan =
+        // 50000 × 20 = 1,000,000
+
+        fillForm(
+            "C011",
+            "30",
+            "50000",
+            "0",
+            "750",
+            "Government",
+            "1000000",
+            "60"
+        );
+
+        boolean pass =
+            getStatus().equals("APPROVED");
+
+        print("TC11 Boundary Loan Amount", pass);
+
+        return pass;
+    }
+
+
+    // TC12
+
+    static boolean testExcessLoan() {
+
+        fillForm(
+            "C012",
+            "30",
+            "50000",
+            "0",
+            "750",
+            "Private",
+            "1000000",
+            "60"
+        );
+
+        boolean pass =
+            getStatus().contains("REJECTED");
+
+        print("TC12 Excess Loan Amount", pass);
+
+        return pass;
+    }
+
+
+    // TC13
+
+    static boolean testEMI() {
+
+        fillForm(
+            "C013",
+            "30",
+            "50000",
+            "0",
+            "750",
+            "Government",
+            "500000",
+            "60"
+        );
 
         String emi =
-                driver.findElement(
-                        By.id("emi"))
-                        .getText();
+            driver.findElement(
+                By.id("emi"))
+                .getText();
 
-        System.out.println(
-                "EMI Calculation Test : " + emi);
+        boolean pass =
+            emi.startsWith("EMI:");
+
+        print("TC13 EMI Calculation", pass);
+
+        return pass;
     }
 
 
-    // 12. Invalid Input
+    // TC14
 
-    static void testInvalidInput() {
+    static boolean testInvalidInput() {
 
         fillForm(
-                "C012",
-                "abc",
-                "50000",
-                "0",
-                "750",
-                "Private",
-                "300000",
-                "60");
+            "C014",
+            "abc",
+            "50000",
+            "0",
+            "750",
+            "Private",
+            "300000",
+            "60"
+        );
 
-        String result =
-                driver.findElement(
-                        By.id("status"))
-                        .getText();
+        boolean pass =
+            getStatus().contains("REJECTED");
 
-        System.out.println(
-                "Invalid Input Test : " + result);
+        print("TC14 Invalid Input", pass);
+
+        return pass;
     }
 
 
-    // 13. Exception Handling
+    // TC15
 
-    static void testExceptionHandling() {
+    static boolean testInvalidTenure() {
 
-        try {
+        fillForm(
+            "C015",
+            "30",
+            "50000",
+            "0",
+            "750",
+            "Private",
+            "300000",
+            "0"
+        );
 
-            driver.get(URL);
+        boolean pass =
+            getStatus().contains("REJECTED");
 
-            driver.findElement(
-                    By.id("submit"))
-                    .click();
+        print("TC15 Invalid Tenure", pass);
+
+        return pass;
+    }
+
+
+    static void print(
+        String testName,
+        boolean passed) {
+
+        if (passed) {
 
             System.out.println(
-                    "Exception Handling Test : PASS");
+                testName + " : PASS");
 
-        }
-        catch (Exception e) {
+        } else {
 
             System.out.println(
-                    "Exception Handling Test : PASS");
+                testName + " : FAIL");
         }
     }
 }
