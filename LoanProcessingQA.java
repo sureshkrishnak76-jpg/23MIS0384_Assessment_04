@@ -1,3 +1,5 @@
+
+import java.io.File;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -7,9 +9,10 @@ public class LoanProcessingQA {
     static WebDriver driver;
 
     static String URL =
-        "file:///C:/YOUR_PATH/23MIS0384_Assessment_04/index.html";
+            new File("index.html").toURI().toString();
 
-
+    // ...
+}
     public static void main(String[] args) {
 
         System.setProperty(
