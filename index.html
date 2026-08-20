@@ -9,7 +9,7 @@
 
 <h1>Banking Loan Approval System</h1>
 
-<form action="processLoan" method="get">
+<form>
 
     <label>Customer ID:</label>
     <input type="text" id="customerId">
@@ -23,7 +23,7 @@
     <input type="number" id="salary">
     <br><br>
 
-    <label>Existing Loan:</label>
+    <label>Existing Loan Amount:</label>
     <input type="number" id="existingLoan">
     <br><br>
 
@@ -34,35 +34,53 @@
     <label>Employment Type:</label>
 
     <select id="employment">
-        <option value="Government">Government</option>
-        <option value="Private">Private</option>
-        <option value="Self-Employed">Self-Employed</option>
+
+        <option value="Government">
+            Government
+        </option>
+
+        <option value="Private">
+            Private
+        </option>
+
+        <option value="Self-Employed">
+            Self-Employed
+        </option>
+
     </select>
 
     <br><br>
 
-    <label>Requested Loan:</label>
+    <label>Requested Loan Amount:</label>
     <input type="number" id="requestedLoan">
     <br><br>
 
-    <label>Loan Tenure:</label>
+    <label>Loan Tenure (months):</label>
     <input type="number" id="tenure">
     <br><br>
 
     <button type="button"
             id="submit"
             onclick="processLoan()">
+
         Process Loan
+
     </button>
 
 </form>
 
+<hr>
+
 <h2 id="status"></h2>
 
 <p id="dti"></p>
+
 <p id="eligibleLoan"></p>
+
 <p id="interestRate"></p>
+
 <p id="emi"></p>
+
 
 <script>
 
@@ -89,29 +107,52 @@ function processLoan() {
     let tenure =
         Number(document.getElementById("tenure").value);
 
-    if (isNaN(age) || age < 18 || age > 60) {
+
+    // Age validation
+
+    if (age < 18 || age > 60) {
+
         document.getElementById("status").innerText =
             "REJECTED - Invalid age";
+
         return;
     }
+
+
+    // Salary validation
 
     if (salary <= 0) {
+
         document.getElementById("status").innerText =
             "REJECTED - Invalid salary";
+
         return;
     }
+
+
+    // Credit score validation
 
     if (creditScore < 600) {
+
         document.getElementById("status").innerText =
             "REJECTED - Poor credit score";
+
         return;
     }
 
+
+    // Existing loan threshold
+
     if (existingLoan > salary * 10) {
+
         document.getElementById("status").innerText =
             "REJECTED - Existing loan exceeds threshold";
+
         return;
     }
+
+
+    // DTI
 
     let existingEMI =
         existingLoan / 60;
@@ -119,59 +160,118 @@ function processLoan() {
     let dti =
         (existingEMI / salary) * 100;
 
+
     document.getElementById("dti").innerText =
         "DTI: " + dti.toFixed(2) + "%";
 
+
     if (dti > 50) {
+
         document.getElementById("status").innerText =
             "REJECTED - High DTI";
+
         return;
     }
+
+
+    // Eligible loan
 
     let eligibleLoan;
 
     if (employment === "Government") {
+
         eligibleLoan = salary * 20;
-    }
-    else if (employment === "Private") {
+
+    } else if (employment === "Private") {
+
         eligibleLoan = salary * 15;
-    }
-    else {
+
+    } else {
+
         eligibleLoan = salary * 12;
     }
 
+
     document.getElementById("eligibleLoan").innerText =
-        "Eligible Loan: " + eligibleLoan.toFixed(2);
+        "Eligible Loan: " +
+        eligibleLoan.toFixed(2);
+
+
+    // Interest rate
 
     let interestRate;
 
-    if (creditScore >= 750)
+    if (creditScore >= 750) {
+
         interestRate = 7.5;
-    else if (creditScore >= 650)
+
+    } else if (creditScore >= 650) {
+
         interestRate = 9.0;
-    else
+
+    } else {
+
         interestRate = 11.0;
+    }
+
 
     document.getElementById("interestRate").innerText =
-        "Interest Rate: " + interestRate + "%";
+        "Interest Rate: " +
+        interestRate + "%";
 
-    if (requestedLoan > eligibleLoan) {
+
+    // Requested loan validation
+
+    if (requestedLoan <= 0) {
+
         document.getElementById("status").innerText =
-            "REJECTED - Loan exceeds eligibility";
+            "REJECTED - Invalid loan amount";
+
         return;
     }
+
+
+    if (requestedLoan > eligibleLoan) {
+
+        document.getElementById("status").innerText =
+            "REJECTED - Loan exceeds eligibility";
+
+        return;
+    }
+
+
+    // EMI
+
+    if (tenure <= 0) {
+
+        document.getElementById("status").innerText =
+            "REJECTED - Invalid tenure";
+
+        return;
+    }
+
 
     let monthlyRate =
         interestRate / (12 * 100);
 
+
     let emi =
-        (requestedLoan * monthlyRate *
-        Math.pow(1 + monthlyRate, tenure))
+        (requestedLoan *
+        monthlyRate *
+        Math.pow(
+            1 + monthlyRate,
+            tenure))
         /
-        (Math.pow(1 + monthlyRate, tenure) - 1);
+        (Math.pow(
+            1 + monthlyRate,
+            tenure) - 1);
+
 
     document.getElementById("emi").innerText =
         "EMI: " + emi.toFixed(2);
+
+
+    // Final result
 
     document.getElementById("status").innerText =
         "APPROVED";
@@ -180,4 +280,5 @@ function processLoan() {
 </script>
 
 </body>
+
 </html>
