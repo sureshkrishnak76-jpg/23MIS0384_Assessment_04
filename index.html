@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Banking Loan Approval System</title>
+</head>
+
+<body>
+
+<h1>Banking Loan Approval System</h1>
+
+<form action="processLoan" method="get">
+
+    <label>Customer ID:</label>
+    <input type="text" id="customerId">
+    <br><br>
+
+    <label>Age:</label>
+    <input type="number" id="age">
+    <br><br>
+
+    <label>Monthly Salary:</label>
+    <input type="number" id="salary">
+    <br><br>
+
+    <label>Existing Loan:</label>
+    <input type="number" id="existingLoan">
+    <br><br>
+
+    <label>Credit Score:</label>
+    <input type="number" id="creditScore">
+    <br><br>
+
+    <label>Employment Type:</label>
+
+    <select id="employment">
+        <option value="Government">Government</option>
+        <option value="Private">Private</option>
+        <option value="Self-Employed">Self-Employed</option>
+    </select>
+
+    <br><br>
+
+    <label>Requested Loan:</label>
+    <input type="number" id="requestedLoan">
+    <br><br>
+
+    <label>Loan Tenure:</label>
+    <input type="number" id="tenure">
+    <br><br>
+
+    <button type="button"
+            id="submit"
+            onclick="processLoan()">
+        Process Loan
+    </button>
+
+</form>
+
+<h2 id="status"></h2>
+
+<p id="dti"></p>
+<p id="eligibleLoan"></p>
+<p id="interestRate"></p>
+<p id="emi"></p>
+
+<script>
+
+function processLoan() {
+
+    let age =
+        Number(document.getElementById("age").value);
+
+    let salary =
+        Number(document.getElementById("salary").value);
+
+    let existingLoan =
+        Number(document.getElementById("existingLoan").value);
+
+    let creditScore =
+        Number(document.getElementById("creditScore").value);
+
+    let employment =
+        document.getElementById("employment").value;
+
+    let requestedLoan =
+        Number(document.getElementById("requestedLoan").value);
+
+    let tenure =
+        Number(document.getElementById("tenure").value);
+
+    if (isNaN(age) || age < 18 || age > 60) {
+        document.getElementById("status").innerText =
+            "REJECTED - Invalid age";
+        return;
+    }
+
+    if (salary <= 0) {
+        document.getElementById("status").innerText =
+            "REJECTED - Invalid salary";
+        return;
+    }
+
+    if (creditScore < 600) {
+        document.getElementById("status").innerText =
+            "REJECTED - Poor credit score";
+        return;
+    }
+
+    if (existingLoan > salary * 10) {
+        document.getElementById("status").innerText =
+            "REJECTED - Existing loan exceeds threshold";
+        return;
+    }
+
+    let existingEMI =
+        existingLoan / 60;
+
+    let dti =
+        (existingEMI / salary) * 100;
+
+    document.getElementById("dti").innerText =
+        "DTI: " + dti.toFixed(2) + "%";
+
+    if (dti > 50) {
+        document.getElementById("status").innerText =
+            "REJECTED - High DTI";
+        return;
+    }
+
+    let eligibleLoan;
+
+    if (employment === "Government") {
+        eligibleLoan = salary * 20;
+    }
+    else if (employment === "Private") {
+        eligibleLoan = salary * 15;
+    }
+    else {
+        eligibleLoan = salary * 12;
+    }
+
+    document.getElementById("eligibleLoan").innerText =
+        "Eligible Loan: " + eligibleLoan.toFixed(2);
+
+    let interestRate;
+
+    if (creditScore >= 750)
+        interestRate = 7.5;
+    else if (creditScore >= 650)
+        interestRate = 9.0;
+    else
+        interestRate = 11.0;
+
+    document.getElementById("interestRate").innerText =
+        "Interest Rate: " + interestRate + "%";
+
+    if (requestedLoan > eligibleLoan) {
+        document.getElementById("status").innerText =
+            "REJECTED - Loan exceeds eligibility";
+        return;
+    }
+
+    let monthlyRate =
+        interestRate / (12 * 100);
+
+    let emi =
+        (requestedLoan * monthlyRate *
+        Math.pow(1 + monthlyRate, tenure))
+        /
+        (Math.pow(1 + monthlyRate, tenure) - 1);
+
+    document.getElementById("emi").innerText =
+        "EMI: " + emi.toFixed(2);
+
+    document.getElementById("status").innerText =
+        "APPROVED";
+}
+
+</script>
+
+</body>
+</html>
