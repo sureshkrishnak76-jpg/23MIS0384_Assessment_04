@@ -1,178 +1,65 @@
-import java.io.File;
-
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.Select;
-
 public class LoanProcessingQA {
-
-    static WebDriver driver;
-
-    // Open local index.html
-    static String URL =
-            new File("index.html").toURI().toString();
 
     static int passed = 0;
     static int failed = 0;
 
     public static void main(String[] args) {
 
-        System.setProperty(
-                "webdriver.chrome.driver",
-                "C:\\Selenium\\chromedriver-win64\\chromedriver.exe"
-        );
+        System.out.println("========================================");
+        System.out.println("       BANKING LOAN APPROVAL - QA");
+        System.out.println("========================================");
+        System.out.println();
 
-        driver = new ChromeDriver();
+        testMinimumAge();
+        testMaximumAge();
+        testInvalidAge();
+        testInvalidSalary();
+        testPoorCreditScore();
+        testExistingLoanThreshold();
+        testHighDTI();
+        testGovernmentEmployment();
+        testPrivateEmployment();
+        testSelfEmployment();
+        testBoundaryLoanAmount();
+        testExcessLoanAmount();
+        testEMIAccuracy();
+        testInvalidInput();
+        testExceptionHandling();
 
-        driver.manage().window().maximize();
+        System.out.println();
+        System.out.println("========================================");
+        System.out.println("             QA TEST SUMMARY");
+        System.out.println("========================================");
 
-        try {
+        System.out.println("TOTAL TESTS : " + (passed + failed));
+        System.out.println("PASSED      : " + passed);
+        System.out.println("FAILED      : " + failed);
 
-            System.out.println("========================================");
-            System.out.println(" BANKING LOAN APPROVAL - SELENIUM QA");
-            System.out.println("========================================");
-            System.out.println();
+        if (failed == 0) {
+            System.out.println("RESULT      : ALL TESTS PASSED");
+        } else {
+            System.out.println("RESULT      : SOME TESTS FAILED");
+        }
 
-            testMinimumAge();
+        System.out.println("========================================");
 
-            testMaximumAge();
-
-            testInvalidAge();
-
-            testInvalidSalary();
-
-            testPoorCreditScore();
-
-            testExistingLoanThreshold();
-
-            testHighDTI();
-
-            testGovernmentEmployment();
-
-            testPrivateEmployment();
-
-            testSelfEmployment();
-
-            testBoundaryLoanAmount();
-
-            testExcessLoanAmount();
-
-            testEMIAccuracy();
-
-            testInvalidInput();
-
-            testInvalidTenure();
-
-            System.out.println();
-            System.out.println("========================================");
-            System.out.println("             QA TEST SUMMARY");
-            System.out.println("========================================");
-
-            System.out.println("TOTAL TESTS : " + (passed + failed));
-            System.out.println("PASSED      : " + passed);
-            System.out.println("FAILED      : " + failed);
-
-            if (failed == 0) {
-
-                System.out.println("RESULT      : ALL TESTS PASSED");
-
-            } else {
-
-                System.out.println("RESULT      : TESTS FAILED");
-            }
-
-            System.out.println("========================================");
-
-        } catch (Exception e) {
-
-            System.out.println();
-            System.out.println("QA PROGRAM ERROR: " + e.getMessage());
-
-        } finally {
-
-            driver.quit();
+        // Make Jenkins fail if any QA test fails
+        if (failed > 0) {
+            System.exit(1);
         }
     }
 
-    // ============================================================
-    // COMMON FORM FILLING METHOD
-    // ============================================================
-
-    static void fillForm(
-            String customerId,
-            String age,
-            String salary,
-            String existingLoan,
-            String creditScore,
-            String employment,
-            String requestedLoan,
-            String tenure) {
-
-        driver.get(URL);
-
-        driver.findElement(
-                By.id("customerId"))
-                .sendKeys(customerId);
-
-        driver.findElement(
-                By.id("age"))
-                .sendKeys(age);
-
-        driver.findElement(
-                By.id("salary"))
-                .sendKeys(salary);
-
-        driver.findElement(
-                By.id("existingLoan"))
-                .sendKeys(existingLoan);
-
-        driver.findElement(
-                By.id("creditScore"))
-                .sendKeys(creditScore);
-
-        // Employment is a SELECT element
-        Select employmentSelect =
-                new Select(
-                        driver.findElement(
-                                By.id("employment")));
-
-        employmentSelect.selectByVisibleText(employment);
-
-        driver.findElement(
-                By.id("requestedLoan"))
-                .sendKeys(requestedLoan);
-
-        driver.findElement(
-                By.id("tenure"))
-                .sendKeys(tenure);
-
-        driver.findElement(
-                By.id("submit"))
-                .click();
-    }
 
     // ============================================================
-    // GET STATUS
+    // COMMON TEST RESULT METHOD
     // ============================================================
 
-    static String getStatus() {
-
-        return driver.findElement(
-                By.id("status"))
-                .getText()
-                .trim();
-    }
-
-    // ============================================================
-    // PRINT TEST RESULT
-    // ============================================================
-
-    static void printResult(
+    static void check(
             String testName,
-            boolean result) {
+            boolean actual,
+            boolean expected) {
 
-        if (result) {
+        if (actual == expected) {
 
             passed++;
 
@@ -188,32 +75,45 @@ public class LoanProcessingQA {
         }
     }
 
+
     // ============================================================
     // TC01 - MINIMUM AGE
     // ============================================================
 
     static void testMinimumAge() {
 
-        fillForm(
-                "C001",
-                "18",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60"
-        );
+        int age = 18;
+        double salary = 50000;
+        double existingLoan = 0;
+        int creditScore = 750;
+        double requestedLoan = 500000;
 
-        String status = getStatus();
+        double dti =
+                LoanProcessingSystem.calculateDTI(
+                        salary,
+                        existingLoan);
+
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Government");
 
         boolean result =
-                status.equals("APPROVED");
+                LoanProcessingSystem.isApproved(
+                        age,
+                        salary,
+                        existingLoan,
+                        creditScore,
+                        requestedLoan,
+                        eligibleLoan,
+                        dti);
 
-        printResult(
+        check(
                 "TC01 Minimum Age (18)",
-                result);
+                result,
+                true);
     }
+
 
     // ============================================================
     // TC02 - MAXIMUM AGE
@@ -221,26 +121,38 @@ public class LoanProcessingQA {
 
     static void testMaximumAge() {
 
-        fillForm(
-                "C002",
-                "60",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60"
-        );
+        int age = 60;
+        double salary = 50000;
+        double existingLoan = 0;
+        int creditScore = 750;
+        double requestedLoan = 500000;
 
-        String status = getStatus();
+        double dti =
+                LoanProcessingSystem.calculateDTI(
+                        salary,
+                        existingLoan);
+
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Government");
 
         boolean result =
-                status.equals("APPROVED");
+                LoanProcessingSystem.isApproved(
+                        age,
+                        salary,
+                        existingLoan,
+                        creditScore,
+                        requestedLoan,
+                        eligibleLoan,
+                        dti);
 
-        printResult(
+        check(
                 "TC02 Maximum Age (60)",
-                result);
+                result,
+                true);
     }
+
 
     // ============================================================
     // TC03 - INVALID AGE
@@ -248,26 +160,38 @@ public class LoanProcessingQA {
 
     static void testInvalidAge() {
 
-        fillForm(
-                "C003",
-                "17",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60"
-        );
+        int age = 17;
+        double salary = 50000;
+        double existingLoan = 0;
+        int creditScore = 750;
+        double requestedLoan = 500000;
 
-        String status = getStatus();
+        double dti =
+                LoanProcessingSystem.calculateDTI(
+                        salary,
+                        existingLoan);
+
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Government");
 
         boolean result =
-                status.contains("REJECTED");
+                LoanProcessingSystem.isApproved(
+                        age,
+                        salary,
+                        existingLoan,
+                        creditScore,
+                        requestedLoan,
+                        eligibleLoan,
+                        dti);
 
-        printResult(
+        check(
                 "TC03 Invalid Age (<18)",
-                result);
+                result,
+                false);
     }
+
 
     // ============================================================
     // TC04 - INVALID SALARY
@@ -275,26 +199,25 @@ public class LoanProcessingQA {
 
     static void testInvalidSalary() {
 
-        fillForm(
-                "C004",
-                "30",
-                "-5000",
-                "0",
-                "750",
-                "Private",
-                "300000",
-                "60"
-        );
+        boolean exceptionThrown = false;
 
-        String status = getStatus();
+        try {
 
-        boolean result =
-                status.contains("REJECTED");
+            LoanProcessingSystem.calculateDTI(
+                    -5000,
+                    0);
 
-        printResult(
+        } catch (IllegalArgumentException e) {
+
+            exceptionThrown = true;
+        }
+
+        check(
                 "TC04 Invalid Salary",
-                result);
+                exceptionThrown,
+                true);
     }
+
 
     // ============================================================
     // TC05 - POOR CREDIT SCORE
@@ -302,26 +225,38 @@ public class LoanProcessingQA {
 
     static void testPoorCreditScore() {
 
-        fillForm(
-                "C005",
-                "30",
-                "50000",
-                "0",
-                "500",
-                "Private",
-                "300000",
-                "60"
-        );
+        int age = 30;
+        double salary = 50000;
+        double existingLoan = 0;
+        int creditScore = 500;
+        double requestedLoan = 300000;
 
-        String status = getStatus();
+        double dti =
+                LoanProcessingSystem.calculateDTI(
+                        salary,
+                        existingLoan);
+
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Private");
 
         boolean result =
-                status.contains("REJECTED");
+                LoanProcessingSystem.isApproved(
+                        age,
+                        salary,
+                        existingLoan,
+                        creditScore,
+                        requestedLoan,
+                        eligibleLoan,
+                        dti);
 
-        printResult(
+        check(
                 "TC05 Poor Credit Score",
-                result);
+                result,
+                false);
     }
+
 
     // ============================================================
     // TC06 - EXISTING LOAN THRESHOLD
@@ -329,26 +264,38 @@ public class LoanProcessingQA {
 
     static void testExistingLoanThreshold() {
 
-        fillForm(
-                "C006",
-                "30",
-                "50000",
-                "600000",
-                "750",
-                "Private",
-                "300000",
-                "60"
-        );
+        int age = 30;
+        double salary = 50000;
+        double existingLoan = 600000;
+        int creditScore = 750;
+        double requestedLoan = 300000;
 
-        String status = getStatus();
+        double dti =
+                LoanProcessingSystem.calculateDTI(
+                        salary,
+                        existingLoan);
+
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Private");
 
         boolean result =
-                status.contains("REJECTED");
+                LoanProcessingSystem.isApproved(
+                        age,
+                        salary,
+                        existingLoan,
+                        creditScore,
+                        requestedLoan,
+                        eligibleLoan,
+                        dti);
 
-        printResult(
+        check(
                 "TC06 Existing Loan Threshold",
-                result);
+                result,
+                false);
     }
+
 
     // ============================================================
     // TC07 - HIGH DTI
@@ -356,26 +303,38 @@ public class LoanProcessingQA {
 
     static void testHighDTI() {
 
-        fillForm(
-                "C007",
-                "30",
-                "30000",
-                "900000",
-                "750",
-                "Private",
-                "200000",
-                "60"
-        );
+        int age = 30;
+        double salary = 30000;
+        double existingLoan = 900000;
+        int creditScore = 750;
+        double requestedLoan = 200000;
 
-        String status = getStatus();
+        double dti =
+                LoanProcessingSystem.calculateDTI(
+                        salary,
+                        existingLoan);
+
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Private");
 
         boolean result =
-                status.contains("REJECTED");
+                LoanProcessingSystem.isApproved(
+                        age,
+                        salary,
+                        existingLoan,
+                        creditScore,
+                        requestedLoan,
+                        eligibleLoan,
+                        dti);
 
-        printResult(
+        check(
                 "TC07 High DTI",
-                result);
+                result,
+                false);
     }
+
 
     // ============================================================
     // TC08 - GOVERNMENT EMPLOYMENT
@@ -383,26 +342,19 @@ public class LoanProcessingQA {
 
     static void testGovernmentEmployment() {
 
-        fillForm(
-                "C008",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60"
-        );
+        double salary = 50000;
 
-        String status = getStatus();
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Government");
 
-        boolean result =
-                status.equals("APPROVED");
-
-        printResult(
+        check(
                 "TC08 Government Employment",
-                result);
+                eligibleLoan,
+                1000000.0);
     }
+
 
     // ============================================================
     // TC09 - PRIVATE EMPLOYMENT
@@ -410,53 +362,39 @@ public class LoanProcessingQA {
 
     static void testPrivateEmployment() {
 
-        fillForm(
-                "C009",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Private",
-                "500000",
-                "60"
-        );
+        double salary = 50000;
 
-        String status = getStatus();
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Private");
 
-        boolean result =
-                status.equals("APPROVED");
-
-        printResult(
+        check(
                 "TC09 Private Employment",
-                result);
+                eligibleLoan,
+                750000.0);
     }
 
+
     // ============================================================
-    // TC10 - SELF EMPLOYMENT
+    // TC10 - SELF EMPLOYED
     // ============================================================
 
     static void testSelfEmployment() {
 
-        fillForm(
-                "C010",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Self-Employed",
-                "500000",
-                "60"
-        );
+        double salary = 50000;
 
-        String status = getStatus();
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Self-Employed");
 
-        boolean result =
-                status.equals("APPROVED");
-
-        printResult(
+        check(
                 "TC10 Self-Employed",
-                result);
+                eligibleLoan,
+                600000.0);
     }
+
 
     // ============================================================
     // TC11 - BOUNDARY LOAN AMOUNT
@@ -464,140 +402,137 @@ public class LoanProcessingQA {
 
     static void testBoundaryLoanAmount() {
 
-        /*
-         * Government salary = 50000
-         *
-         * Eligible loan = 50000 × 20
-         *               = 1,000,000
-         *
-         * Requested loan = 1,000,000
-         *
-         * Exactly equal to eligible amount.
-         */
+        int age = 30;
+        double salary = 50000;
+        double existingLoan = 0;
+        int creditScore = 750;
 
-        fillForm(
-                "C011",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "1000000",
-                "60"
-        );
+        // Government eligible loan = 50,000 × 20
+        // = 1,000,000
 
-        String status = getStatus();
+        double requestedLoan = 1000000;
+
+        double dti =
+                LoanProcessingSystem.calculateDTI(
+                        salary,
+                        existingLoan);
+
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Government");
 
         boolean result =
-                status.equals("APPROVED");
+                LoanProcessingSystem.isApproved(
+                        age,
+                        salary,
+                        existingLoan,
+                        creditScore,
+                        requestedLoan,
+                        eligibleLoan,
+                        dti);
 
-        printResult(
+        check(
                 "TC11 Boundary Loan Amount",
-                result);
+                result,
+                true);
     }
 
+
     // ============================================================
-    // TC12 - LOAN ABOVE ELIGIBLE LIMIT
+    // TC12 - EXCESS LOAN AMOUNT
     // ============================================================
 
     static void testExcessLoanAmount() {
 
-        /*
-         * Private salary = 50000
-         *
-         * Eligible loan = 50000 × 15
-         *               = 750000
-         *
-         * Requested = 1000000
-         *
-         * Therefore REJECTED.
-         */
+        int age = 30;
+        double salary = 50000;
+        double existingLoan = 0;
+        int creditScore = 750;
 
-        fillForm(
-                "C012",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Private",
-                "1000000",
-                "60"
-        );
+        // Private eligible loan = 750,000
+        // Requesting 1,000,000 should be rejected
 
-        String status = getStatus();
+        double requestedLoan = 1000000;
+
+        double dti =
+                LoanProcessingSystem.calculateDTI(
+                        salary,
+                        existingLoan);
+
+        double eligibleLoan =
+                LoanProcessingSystem.calculateEligibleLoan(
+                        salary,
+                        "Private");
 
         boolean result =
-                status.contains("REJECTED");
+                LoanProcessingSystem.isApproved(
+                        age,
+                        salary,
+                        existingLoan,
+                        creditScore,
+                        requestedLoan,
+                        eligibleLoan,
+                        dti);
 
-        printResult(
+        check(
                 "TC12 Excess Loan Amount",
-                result);
+                result,
+                false);
     }
 
+
     // ============================================================
-    // TC13 - EMI ACCURACY
+    // TC13 - EMI CALCULATION ACCURACY
     // ============================================================
 
     static void testEMIAccuracy() {
 
-        fillForm(
-                "C013",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Government",
-                "500000",
-                "60"
-        );
+        double loanAmount = 500000;
+        double interestRate = 7.5;
+        int tenure = 60;
 
-        String emiText =
-                driver.findElement(
-                        By.id("emi"))
-                        .getText()
-                        .trim();
+        double actualEMI =
+                LoanProcessingSystem.calculateEMI(
+                        loanAmount,
+                        interestRate,
+                        tenure);
 
-        /*
-         * Loan = 500000
-         * Interest = 7.5%
-         * Tenure = 60 months
-         *
-         * Expected EMI ≈ 10018.97
-         */
+        // Expected EMI calculated using
+        // the same financial formula
 
-        boolean result = false;
+        double monthlyRate =
+                interestRate / (12 * 100);
 
-        try {
+        double expectedEMI =
+                (loanAmount * monthlyRate
+                        * Math.pow(
+                                1 + monthlyRate,
+                                tenure))
+                /
+                (Math.pow(
+                        1 + monthlyRate,
+                        tenure) - 1);
 
-            String value =
-                    emiText.replace(
-                            "EMI:",
-                            "")
-                            .trim();
+        boolean result =
+                Math.abs(
+                        actualEMI - expectedEMI)
+                < 0.01;
 
-            double actualEMI =
-                    Double.parseDouble(value);
-
-            double expectedEMI =
-                    10018.97;
-
-            double tolerance =
-                    1.00;
-
-            result =
-                    Math.abs(
-                            actualEMI - expectedEMI)
-                    <= tolerance;
-
-        } catch (Exception e) {
-
-            result = false;
-        }
-
-        printResult(
+        check(
                 "TC13 EMI Calculation Accuracy",
-                result);
+                result,
+                true);
+
+        System.out.printf(
+                "    Expected EMI : %.2f%n",
+                expectedEMI);
+
+        System.out.printf(
+                "    Actual EMI   : %.2f%n",
+                actualEMI);
     }
+
 
     // ============================================================
     // TC14 - INVALID INPUT
@@ -605,61 +540,89 @@ public class LoanProcessingQA {
 
     static void testInvalidInput() {
 
-        /*
-         * "abc" is not a valid age.
-         *
-         * HTML5 number input may reject this
-         * before Selenium enters it.
-         *
-         * We therefore verify that the application
-         * does NOT produce APPROVED.
-         */
+        boolean exceptionThrown = false;
 
-        fillForm(
-                "C014",
-                "abc",
-                "50000",
-                "0",
-                "750",
-                "Private",
-                "300000",
-                "60"
-        );
+        try {
 
-        String status = getStatus();
+            LoanProcessingSystem.calculateEMI(
+                    -500000,
+                    7.5,
+                    60);
 
-        boolean result =
-                !status.equals("APPROVED");
+        } catch (IllegalArgumentException e) {
 
-        printResult(
+            exceptionThrown = true;
+        }
+
+        check(
                 "TC14 Invalid Input",
-                result);
+                exceptionThrown,
+                true);
     }
 
+
     // ============================================================
-    // TC15 - INVALID TENURE
+    // TC15 - EXCEPTION HANDLING
     // ============================================================
 
-    static void testInvalidTenure() {
+    static void testExceptionHandling() {
 
-        fillForm(
-                "C015",
-                "30",
-                "50000",
-                "0",
-                "750",
-                "Private",
-                "300000",
-                "0"
-        );
+        boolean exceptionThrown = false;
 
-        String status = getStatus();
+        try {
+
+            LoanProcessingSystem.calculateEMI(
+                    500000,
+                    7.5,
+                    0);
+
+        } catch (IllegalArgumentException e) {
+
+            exceptionThrown = true;
+        }
+
+        check(
+                "TC15 Exception Handling",
+                exceptionThrown,
+                true);
+    }
+
+
+    // ============================================================
+    // DOUBLE VALUE CHECK
+    // ============================================================
+
+    static void check(
+            String testName,
+            double actual,
+            double expected) {
 
         boolean result =
-                status.contains("REJECTED");
+                Math.abs(actual - expected) < 0.01;
 
-        printResult(
-                "TC15 Invalid Tenure",
-                result);
+        if (result) {
+
+            passed++;
+
+            System.out.printf(
+                    "%s : PASS%n",
+                    testName);
+
+        } else {
+
+            failed++;
+
+            System.out.printf(
+                    "%s : FAIL%n",
+                    testName);
+
+            System.out.printf(
+                    "    Expected : %.2f%n",
+                    expected);
+
+            System.out.printf(
+                    "    Actual   : %.2f%n",
+                    actual);
+        }
     }
 }
